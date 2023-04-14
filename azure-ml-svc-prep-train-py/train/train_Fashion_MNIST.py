@@ -119,4 +119,7 @@ print('Test accuracy:', score[1])
 run.log('loss', score[0])
 run.log('accuracy', score[1])
 
-#   Pl
+#   Plot data to see relationships in training and validation data
+epoch_list = list(range(1, len(hist.history['accuracy']) + 1))  # values for x axis [1, 2, ..., # of epochs]
+plt.plot(epoch_list, hist.history['accuracy'], epoch_list, hist.history['val_accuracy'])
+plt.legend(('Training Accuracy', 'Validation Accur
