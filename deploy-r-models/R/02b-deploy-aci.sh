@@ -41,4 +41,12 @@ done
 shift $((OPTIND-1))
 
 #Prompt for parameters is some required parameters are missing
-if [[ -z "$subscriptionI
+if [[ -z "$subscriptionId" ]]; then
+	echo "Your subscription ID can be looked up with the CLI using: az account show --out json "
+	echo "Enter your subscription ID:"
+	read subscriptionId
+	[[ "${subscriptionId:?}" ]]
+fi
+
+if [[ -z "$resourceGroupName" ]]; then
+	echo "This script will look for an existin
