@@ -69,4 +69,19 @@ if [[ -z "$resourceGroupLocation" ]]; then
 	read resourceGroupLocation
 fi
 
-if [[ -z 
+if [[ -z "$acrName" ]]; then
+	echo "Enter a name for the azure container registry:"
+	read acrName
+fi
+
+if [[ -z "$aciDnsNameLabel" ]]; then
+	echo "Enter a name for the azure container instance dns entry:"
+	read aciDnsNameLabel
+fi
+
+#login to azure using your credentials
+az account show 1> /dev/null
+
+if [ $? != 0 ];
+then
+	az lo
