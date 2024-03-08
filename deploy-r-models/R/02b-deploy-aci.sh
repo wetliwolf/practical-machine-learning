@@ -108,4 +108,20 @@ fi
 
 echo "Deploying Container Registry..."
 (
-	az acr create -g "$resourceGroupName" -n "$acrName" --sku basic --admin-e
+	az acr create -g "$resourceGroupName" -n "$acrName" --sku basic --admin-enabled true 1> /dev/null
+)
+
+echo "Building Docker Image..."
+(
+	docker build -t $acrName.azurecr.io/carssvc .
+)
+
+echo "Uploading Docker Image..."
+(
+	docker push $acrName.azurecr.io/carssvc
+)
+
+#Start deployment
+echo "Starting deployment..."
+(
+	acrPassword=$(az acr credential
