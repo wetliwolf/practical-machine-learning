@@ -96,4 +96,16 @@ set +e
 az group show --name $resourceGroupName 1> /dev/null
 
 if [ $? != 0 ]; then
-	echo "Resource group with name" $resourceGroupName "could not be found. Creating new resou
+	echo "Resource group with name" $resourceGroupName "could not be found. Creating new resource group.."
+	set -e
+	(
+		set -x
+		az group create --name $resourceGroupName --location $resourceGroupLocation 1> /dev/null
+	)
+	else
+	echo "Using existing resource group..."
+fi
+
+echo "Deploying Container Registry..."
+(
+	az acr create -g "$resourceGroupName" -n "$acrName" --sku basic --admin-e
