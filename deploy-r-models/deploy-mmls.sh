@@ -123,3 +123,77 @@ set +e
 
 #Check for existing RG
 az group show --name $resourceGroupName 1> /dev/null
+
+if [ $? != 0 ]; then
+	echo "Resource group with name" $resourceGroupName "could not be found. Creating new resource group.."
+	set -e
+	(
+		set -x
+		az group create --name $resourceGroupName --location $resourceGroupLocation 1> /dev/null
+	)
+	else
+	echo "Using existing resource group..."
+fi
+
+echo "Starting deployment..."
+
+#Start deployment
+echo "Virtual Network..."
+(
+	set -x
+	az network vnet create -g "$resourceGroupName" -n "$vmPrefix-vnet" --address-prefix 10.0.0.0/16 \
+        --subnet-name default --subnet-prefix 10.0.0.0/24 \
+		| jq -r .newVNet.provisioningState
+)
+
+echo "Network Security Group with 3 Rules..."
+(
+	set -x
+	az network nsg create -g "$resourceGroupName" -n "$vmPrefix-nsg" | jq -r .NewNSG.provisioningState
+
+	az network nsg rule create -g "$resourceGroupName" --nsg-name "$vmPrefix-nsg" -n "MLSvr_WebNode" \
+		--priority 1000 --access Allow --protocol Tcp --direction Inbound \
+		--destination-address-prefixes '*' --destination-port-ranges 12800 \
+		| jq -r .provisioningState
+
+	az network nsg rule create -g "$resourceGroupName" --nsg-name "$vmPrefix-nsg" -n "MLSvr_ComputeNode" \
+		--priority 1100 --access Allow --protocol Tcp --direction Inbound \
+		--destination-address-prefixes '*' --destination-port-ranges 12805 \
+		| jq -r .provisioningState
+
+	az network nsg rule create -g "$resourceGroupName" --nsg-name "$vmPrefix-nsg" -n "MLSvr_RServe" \
+		--priority 1200 --access Allow --protocol Tcp --direction Inbound \
+		--destination-address-prefixes '*' --destination-port-ranges 9054 \
+		| jq -r .provisioningState
+)
+
+echo "Public IP & NIC..."
+(
+	set -x
+	az network public-ip create -g "$resourceGroupName" -n "$vmPrefix-ip" --sku Basic \
+		| jq -r .publicIp.provisioningState
+	az network nic create -g "$resourceGroupName" -n "$vmPrefix-nic" --vnet-name "$vmPrefix-vnet" \
+		--subnet default --network-security-group "$vmPrefix-nsg" --public-ip-address "$vmPrefix-ip" \
+		| jq -r .NewNIC.provisioningState
+)
+
+echo "Virtual Machine..."
+(
+	az vm create -g "$resourceGroupName" -n "$vmPrefix" \
+		--image Canonical:UbuntuServer:16.04-LTS:latest --size Standard_D2s_v3 \
+        --authentication-type password --admin-username "$username" --admin-password $password \
+        --nics "$vmPrefix-nic" --os-disk-name "$vmPrefix-osdisk" --enable-agent "true"
+)
+
+echo "Microsoft Machine Learning Server..."
+(
+	az vm extension set -g "$resourceGroupName" -n "customScript" \
+		--vm-name "$vmPrefix" --publisher Microsoft.Azure.Extensions \
+		--protected-settings "{\"fileUris\": [\"https://raw.githubusercontent.com/SaschaDittmann/machine-learning-in-practice/master/deploy-r-models/setup/install-mmls-ubuntu.sh\"],\"commandToExecute\": \"./install-mmls-ubuntu.sh -p '$password'\"}" \
+		| jq -r .provisioningState
+)
+
+if [ $?  == 0 ];
+ then
+	echo "Microsoft Machine Learning Server has been successfully deployed"
+fi
