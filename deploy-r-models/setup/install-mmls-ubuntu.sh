@@ -13,4 +13,13 @@ shift $((OPTIND-1))
 
 if [[ -z "$password" ]]; then
 	while : ; do
-		ec
+		echo -n "Enter a password for the Machine Learning Server admin:"
+		read -s password
+		echo
+		echo -n "Please repeat the password for the Machine Learning Server admin:"
+		read -s password_confirm
+		echo
+		if [[ "$password" == "$password_confirm" ]]; then
+			break
+		else
+			echo "The passwords do not 
