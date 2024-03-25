@@ -22,4 +22,15 @@ if [[ -z "$password" ]]; then
 		if [[ "$password" == "$password_confirm" ]]; then
 			break
 		else
-			echo "The passwords do not 
+			echo "The passwords do not match. Please retry."
+		fi
+	done
+fi
+
+# Optionally, if your system does not have the https apt transport option
+apt-get install apt-transport-https
+
+# Add the **azure-cli** repo to your apt sources list
+AZ_REPO=$(lsb_release -cs)
+
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/
