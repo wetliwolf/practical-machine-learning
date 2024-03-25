@@ -33,4 +33,8 @@ apt-get install apt-transport-https
 # Add the **azure-cli** repo to your apt sources list
 AZ_REPO=$(lsb_release -cs)
 
-echo "deb [arch=amd64] https://packages.microsoft.com/repos/
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+
+# Set the location of the package repo the "prod" directory containing the distribution.
+# This example specifies 16.04. Replace with 14.04 if you want that version
+wget https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.de
